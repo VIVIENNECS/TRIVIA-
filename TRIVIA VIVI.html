@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trivia de Conocimientos Generales</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <style>
+    body {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      background: linear-gradient(to right, #81ecec, #fab1a0);
+      text-align: center;
+      padding: 2rem;
+    }
+    .quiz-container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+    }
+    h1 {
+      font-size: 2.5rem;
+      color: #2d3436;
+    }
+    .question {
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 0.5rem 0;
+      padding: 1rem;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 10px;
+      background-color: #dfe6e9;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .options button.correct {
+      background-color: #55efc4;
+      color: #2d3436;
+    }
+    .options button.incorrect {
+      background-color: #fab1a0;
+      color: #2d3436;
+    }
+    .next-btn, .restart-btn {
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      background-color: #74b9ff;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      margin-top: 1rem;
+      cursor: pointer;
+      display: none;
+    }
+    .result {
+      font-size: 1.5rem;
+      margin-top: 2rem;
+    }
+    .medal {
+      width: 50px;
+      vertical-align: middle;
+      margin-left: 10px;
+    }
+    .icon {
+      width: 40px;
+      margin-bottom: -10px;
+    }
+    .timer {
+      font-size: 1.2rem;
+      color: #2d3436;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1 class="animate__animated animate__bounceIn">Trivia de Conocimientos Generales</h1>
+  <div class="quiz-container animate__animated animate__fadeIn" id="quiz">
+    <div class="timer" id="timer">Tiempo restante: 15s</div>
+    <div class="question" id="question"></div>
+    <img id="questionIcon" class="icon" src="" alt="Icono" style="display: none;" />
+    <div class="options" id="options"></div>
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Siguiente</button>
+    <button class="restart-btn" id="restartBtn" onclick="restartQuiz()">Reiniciar</button>
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    const preguntas = [
+      { q: '¿Cuál es la capital de México?', o: ['Guadalajara', 'Puebla', 'Ciudad de México', 'Monterrey'], a: 2, icon: 'https://cdn-icons-png.flaticon.com/512/197/197386.png' },
+      { q: '¿Cuántos planetas hay en el sistema solar?', o: ['7', '8', '9', '10'], a: 1, icon: 'https://cdn-icons-png.flaticon.com/512/3210/3210041.png' },
+      { q: '¿Quién escribió "Cien años de soledad"?', o: ['Pablo Neruda', 'Julio Cortázar', 'Gabriel García Márquez', 'Mario Vargas Llosa'], a: 2, icon: 'https://cdn-icons-png.flaticon.com/512/1828/1828884.png' },
+      { q: '¿Qué animal es conocido como el rey de la selva?', o: ['León', 'Tigre', 'Elefante', 'Jirafa'], a: 0, icon: 'https://cdn-icons-png.flaticon.com/512/616/616408.png' },
+      { q: '¿Cuál es el continente más grande?', o: ['África', 'América', 'Asia', 'Europa'], a: 2, icon: 'https://cdn-icons-png.flaticon.com/512/2917/2917990.png' },
+      { q: '¿Qué gas respiramos para vivir?', o: ['Oxígeno', 'Dióxido de carbono', 'Nitrógeno', 'Helio'], a: 0, icon: 'https://cdn-icons-png.flaticon.com/512/1995/1995485.png' },
+      { q: '¿En qué país se originaron los Juegos Olímpicos?', o: ['Italia', 'Grecia', 'China', 'Egipto'], a: 1, icon: 'https://cdn-icons-png.flaticon.com/512/812/812957.png' },
+      { q: '¿Cuántos lados tiene un triángulo?', o: ['3', '4', '5', '6'], a: 0, icon: 'https://cdn-icons-png.flaticon.com/512/2838/2838912.png' },
+      { q: '¿Qué instrumento tiene cuerdas?', o: ['Tambor', 'Flauta', 'Guitarra', 'Trompeta'], a: 2, icon: 'https://cdn-icons-png.flaticon.com/512/3466/3466997.png' },
+      { q: '¿Qué color resulta de mezclar azul y amarillo?', o: ['Verde', 'Rojo', 'Morado', 'Naranja'], a: 0, icon: 'https://cdn-icons-png.flaticon.com/512/2343/2343843.png' }
+    ];
+
+    let index = 0;
+    let score = 0;
+    let timer;
+    let timeLeft = 15;
+
+    function showQuestion() {
+      clearInterval(timer);
+      timeLeft = 15;
+      document.getElementById('timer').innerText = `Tiempo restante: ${timeLeft}s`;
+      timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer').innerText = `Tiempo restante: ${timeLeft}s`;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          checkAnswer(-1);
+        }
+      }, 1000);
+
+      const q = preguntas[index];
+      document.getElementById('question').innerText = q.q;
+      const icon = document.getElementById('questionIcon');
+      icon.src = q.icon;
+      icon.style.display = 'inline';
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      q.o.forEach((option, i) => {
+        const btn = document.createElement('button');
+        btn.innerText = option;
+        btn.onclick = () => checkAnswer(i, btn);
+        options.appendChild(btn);
+      });
+      document.getElementById('nextBtn').style.display = 'none';
+    }
+
+    function checkAnswer(selectedIndex, button) {
+      clearInterval(timer);
+      const correctIndex = preguntas[index].a;
+      const buttons = document.querySelectorAll('#options button');
+      buttons.forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === correctIndex) {
+          btn.classList.add('correct');
+          const medal = document.createElement('img');
+          medal.src = 'https://cdn-icons-png.flaticon.com/512/2583/2583346.png';
+          medal.classList.add('medal');
+          btn.appendChild(medal);
+        } else if (i === selectedIndex) {
+          btn.classList.add('incorrect');
+        }
+      });
+      if (selectedIndex === correctIndex) score++;
+      document.getElementById('nextBtn').style.display = 'inline-block';
+    }
+
+    function nextQuestion() {
+      index++;
+      if (index < preguntas.length) {
+        showQuestion();
+      } else {
+        const resultText = `Tu puntaje final es ${score}/10.\n` +
+          (score === 10 ? '¡Excelente trabajo!' :
+           score >= 7 ? '¡Muy bien hecho!' :
+           score >= 5 ? '¡Bien, pero puedes mejorar!' :
+           'Sigue practicando, lo harás mejor la próxima vez.');
+        document.getElementById('quiz').innerHTML = `<h2>Resultado</h2><p class='result'>${resultText}</p><button class='restart-btn' onclick='restartQuiz()'>Reiniciar</button>`;
+      }
+    }
+
+    function restartQuiz() {
+      index = 0;
+      score = 0;
+      document.getElementById('quiz').innerHTML = `
+        <div class="timer" id="timer">Tiempo restante: 15s</div>
+        <div class="question" id="question"></div>
+        <img id="questionIcon" class="icon" src="" alt="Icono" style="display: none;" />
+        <div class="options" id="options"></div>
+        <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Siguiente</button>
+        <button class="restart-btn" id="restartBtn" onclick="restartQuiz()">Reiniciar</button>
+        <div class="result" id="result"></div>`;
+      showQuestion();
+    }
+
+    // Iniciar
+    showQuestion();
+  </script>
+</body>
+</html>
